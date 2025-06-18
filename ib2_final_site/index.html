@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pew was here</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <style>
+        body {{
+            margin: 0;
+            font-family: sans-serif;
+            color: white;
+            text-align: center;
+        }}
+        #main-content {{
+            display: none;
+        }}
+        video {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }}
+        .content {{
+            margin-top: 10%;
+        }}
+        img {{
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+        }}
+        a {{
+            color: white;
+            text-decoration: none;
+        }}
+    </style>
+</head>
+<body>
+    <div id="landing-page" onclick="startSite()" style="height: 100vh; display: flex; align-items: center; justify-content: center; font-size: 2rem; background-color: black;">
+        Click Anywhere
+    </div>
+    <div id="main-content">
+        <video autoplay muted loop>
+            <source src="assets/media/bg.mp4" type="video/mp4" />
+        </video>
+        <audio autoplay loop>
+            <source src="assets/media/music.mp3" type="audio/mpeg" />
+        </audio>
+        <div class="content">
+            <img src="assets/pictures/pfp.jpg" />
+            <h1>Pew was here, lol</h1>
+            <p><a href="https://discord.com/users/1059627522888839200">Discord</a></p>
+            <p><a href="https://steamcommunity.com/id/losehoes/">Steam</a></p>
+            <p><a href="https://github.com/PradaOnMyBag">GitHub</a></p>
+        </div>
+    </div>
+    <script>
+        function startSite() {{
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }}
+    </script>
+</body>
+</html>
