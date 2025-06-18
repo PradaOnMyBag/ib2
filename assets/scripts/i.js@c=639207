@@ -1,0 +1,230 @@
+"use strict";
+
+import { AudioMotionAnalyzer } from 'https://cdn.skypack.dev/audiomotion-analyzer?min';
+
+function click(){if(2==event.button||3==event.button){function e(e){e||(e=window.event),e.stopPropagation?e.stopPropagation():e.cancelBubble=!0,e.preventDefault?e.preventDefault():e.returnValue=!1}oncontextmenu="return false",document.body.addEventListener&&document.body.addEventListener("DOMMouseScroll",e,!1),document.body.onmousewheel=e}}document.onkeydown=function(e){return e.ctrlKey&&(67===e.keyCode||86===e.keyCode||85===e.keyCode||e.keyCode),e.shiftKey&&(2==event.button||event.button),!1},document.onmousedown=click,document.oncontextmenu=Function("return false;");
+let alreadyClicked = false;
+
+$(document).ready(async function () {
+    const strings = [];
+    
+    async function fetchData(Url) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: Url,
+                dataType: "json",
+                success: function(data) {
+                    resolve(data);
+                }
+            });
+        });
+    }
+
+    const data = await fetchData("assets/storage.json");
+    const userData = await fetchData("https://ib2.dev/fetch.php?user=pew")
+    const video = document.getElementById("background-video"), music = document.getElementById("background-music");
+    const storedSongs = data["songs"], storedVideos = data["videos"];
+    
+    function playRandomVideo() {
+        const randomVideo = storedVideos[Math.floor(Math.random() * storedVideos.length)];
+        video.src = `assets/videos/${randomVideo}`;
+        
+        video.volume = 0;
+        video.muted = true;
+        
+        video.play();
+    }
+
+    let lastSong = null;
+    function playRandomSong() {
+      let randomSong;
+      do {
+        randomSong = storedSongs[Math.floor(Math.random() * storedSongs.length)];
+      } while (storedSongs.length > 1 && randomSong === lastSong);
+    
+      lastSong = randomSong;
+      music.src = `assets/music/${randomSong}.mp3`;
+    
+      music.muted = music.muted;
+      music.volume = 0.1;
+      
+      if (music.muted || video.paused)
+        music.pause();
+    
+      document.getElementById("nowPlaying").textContent = randomSong;
+      music.addEventListener("ended", playRandomSong, { once: true });
+    }
+
+    function playRandomMedia() {
+      playRandomVideo()
+      playRandomSong()
+    }
+
+    document.getElementById("savedpfp").src = userData.avatar;
+    document.getElementById("displayname").textContent = (/[^a-zA-Z0-9]/.test(userData.global_name) || userData.global_name.length <= 15) ? userData.username : userData.global_name;
+    document.getElementById("displayid").textContent = userData.id;
+    strings.push(...data.strings);
+    music.load()
+    video.load()
+    
+    const audioContext = new AudioContext();
+    
+    const audioMotion = new AudioMotionAnalyzer(
+        document.getElementById("visBox"),
+        {
+          height: 300,
+          ansiBands: false,
+          showScaleX: false,
+          bgAlpha: 0,
+          overlay: true,
+          mode: 10,
+          frequencyScale: "log",
+          radial: false,
+          showPeaks: false,
+          channelLayout: "single",
+          smoothing: 0.9,
+          fadePeaks: true,
+          fftSize: 8192,
+          maxFreq: 8000,
+          mirror: 0,
+          maxFPS: 120,
+          gradient: "prism",
+          frequencyScale: "linear",
+          linearAmplitude: true,
+          linearBoost: 1.5,
+          lineWidth: 2,
+          maxFreq: 8000,
+          minDecibels: -85,
+          minFreq: 10,
+        }
+    );
+    audioMotion.connectInput(music);
+    
+    $("#current-year").text(new Date().getFullYear());
+    $("#landing-page").click(function() {
+        if (alreadyClicked) return;
+        alreadyClicked = true;
+        
+        playRandomMedia();
+        
+        let muteButton = $("#mute-button");
+        let pauseButton = $("#pause-button");
+        
+        $("#nowPlaying").click(playRandomSong)
+        music.addEventListener("ended", playRandomSong);
+        
+        $(this).addClass("slide-out").on("animationend", function () {
+          $(this).addClass("hidden");
+        });
+        
+        $("#main-content").removeClass("hidden");
+        
+        const animations = [
+            { selector: "#main-box", animation: "slide-down" },
+            { selector: "#display-1", animation: "slide-right" },
+            { selector: "#button-2", animation: "slide-left" },
+            { selector: "#button-3", animation: "slide-up" },
+            { selector: "#footer", animation: "slide-up" },
+        ];
+        
+        animations.forEach(({ selector, animation }) => {$(selector).addClass(animation);});
+        
+        new Typed("#typed-text", {
+            strings,
+            typeSpeed: 150,
+            startDelay: 5,
+            backSpeed: 50,
+            loop: true,
+            showCursor: true,
+            cursorChar: "|",
+            autoInsertCss: true,
+            smartBackspace: true,
+            shuffle: true
+        });
+        
+        muteButton.click(function() {
+            if (video.paused) return;
+        
+            music.muted = !music.muted;
+            music[music.muted ? "pause" : "play"]();
+        
+            muteButton.toggleClass("fa-volume-up fa-volume-mute");
+            tooltips[this.id].setContent(music.muted ? "Unmute" : "Mute");
+        });
+        
+        pauseButton.click(function() {
+            const isPaused = video.paused;
+          
+            video[isPaused ? "play" : "pause"]();
+            if (!music.muted)
+                music[isPaused ? "play" : "pause"]();
+          
+            pauseButton.toggleClass("fa-play fa-pause");
+            tooltips[this.id].setContent(isPaused ? "Pause" : "Play");
+        });
+        
+        const tooltips = {};
+        
+        $("[data-tooltip]").each(function () {
+          const delay = ["mute-button", "pause-button"].includes(this.id) ? 300 : 0;
+          const placement = ["mute-button", "pause-button"].includes(this.id) ? "top" : "bottom";
+        
+          tooltips[this.id] = tippy(this, {
+            content: $(this).data("tooltip"),
+            allowHTML: false,
+            animateFill: true,
+            arrow: true,
+            delay,
+            followCursor: false,
+            hideOnClick: false,
+            inlinePositioning: true,
+            interactiveBorder: 2,
+            interactiveDebounce: 0,
+            maxWidth: "none",
+            placement,
+            touch: "hold",
+            animation: "shift-away",
+            onShow(instance) {
+              instance.popper.style.opacity = "0";
+              requestAnimationFrame(() => {
+                instance.popper.style.transition = "opacity 0.3s";
+                instance.popper.style.opacity = "1";
+              });
+            },
+            onHide(instance) {
+              instance.popper.style.opacity = "0";
+            },
+            });
+        });
+        
+        $("#discord-tool").click(function () {
+            const discordToolTip = $(this).data("tooltip");
+            navigator.clipboard.writeText(discordToolTip).then(() => {
+                tooltips[this.id].setContent("Copied to Clipboard!");
+            }).catch(() => {
+                tooltips[this.id].setContent("Failed to Copy to Clipboard!");
+            }).finally(() => {
+                setTimeout(() => {
+                  tooltips[this.id].setContent(discordToolTip);
+                }, 3000);
+            });
+        });
+        
+        tooltips["view-tool"].setContent(data.viewCount)
+        
+        let docInt = 0, deleting = false, docTitle = document.title;
+        
+        setInterval(() => {
+            document.title = docTitle.substring(0, docInt);
+          
+            if (!deleting) {
+                docInt++;
+                if (docInt > docTitle.length) deleting = true;
+            } else {
+                docInt--;
+                if (docInt === 1) deleting = false;
+            }
+        }, 500);
+        
+    });
+});
